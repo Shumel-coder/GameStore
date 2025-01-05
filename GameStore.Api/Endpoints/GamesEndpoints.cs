@@ -64,21 +64,19 @@ private static readonly List<GameSummaryDTO> games = [
       });
 
       // PUT /games
-      group.MapPut("/{id}", (int id, UpdateGameDTO updatedGame) => {
-        var index = games.FindIndex(game => game.Id == id);
+      group.MapPut("/{id}", (int id, UpdateGameDTO updatedGame, GameStoreContext dbContext) => {
+        var existingGame = dbContext.Games.Find(id);
 
-        if(index == -1) {
+        if(existingGame is null) {
           return Results.NotFound();
         }
         
-        games[index] = new GameSummaryDTO(
-          id,
-          updatedGame.Name,
-          updatedGame.Genre,
-          updatedGame.Price,
-          updatedGame.ReleaseDate
-        );
-
+        dbContext.Entry(existingGame)
+                 .CurrentValues
+                 .SetValues(updatedGame.ToEntity(id));
+        
+        dbContext.SaveChanges();
+        
         return Results.NoContent();
       });
 
