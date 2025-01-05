@@ -2,6 +2,7 @@ using GameStore.Api.Data;
 using GameStore.Api.DTOs;
 using GameStore.Api.Entities;
 using GameStore.Api.Mapping;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.Api.Endpoints;
 
@@ -36,7 +37,11 @@ private static readonly List<GameSummaryDTO> games = [
       var group = app.MapGroup("games")
                      .WithParameterValidation(); 
       // GET /games
-      group.MapGet("/", () => games);
+      group.MapGet("/", (GameStoreContext dbContext) => 
+      dbContext.Games
+                .Include(game => game.Genre)
+                .Select(game => game.ToGameSummaryDTO())
+                .AsNoTracking());
 
       //GET /games/1
       group.MapGet("/{id}", (int id, GameStoreContext dbContext) => 
@@ -76,14 +81,16 @@ private static readonly List<GameSummaryDTO> games = [
                  .SetValues(updatedGame.ToEntity(id));
         
         dbContext.SaveChanges();
-        
+
         return Results.NoContent();
       });
 
       // DELETE /games/1
-      group.MapDelete("/{id}", (int id) => 
+      group.MapDelete("/{id}", (int id, GameStoreContext dbContext) => 
       {
-        games.RemoveAll(game => game.Id == id);
+        dbContext.Games
+                 .Where(game => game.Id == id)
+                 .ExecuteDelete();  
 
         return Results.NoContent();
       });
