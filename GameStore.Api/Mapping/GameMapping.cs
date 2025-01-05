@@ -14,11 +14,22 @@ public static class GameMapping {
         };
   }
 
-  public static GameDTO ToDTO(this Game game) {
+  public static GameSummaryDTO ToGameSummaryDTO(this Game game) {
     return new (
           game.Id,
           game.Name,
           game.Genre!.Name,
+          game.Price,
+          game.ReleaseDate
+        );
+    
+  }
+
+  public static GameDetailsDTO ToGameDetailsDTO(this Game game) {
+    return new (
+          game.Id,
+          game.Name,
+          game.GenreId,
           game.Price,
           game.ReleaseDate
         );
